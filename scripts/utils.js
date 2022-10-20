@@ -1,7 +1,7 @@
 const fs = require('fs')
 const chalk = require('chalk')
 
-const targets = (exports.targets = fs.readdirSync('packages').filter(f => {
+const targets = fs.readdirSync('packages').filter(f => {
   if (!fs.statSync(`packages/${f}`).isDirectory()) {
     return false
   }
@@ -10,7 +10,8 @@ const targets = (exports.targets = fs.readdirSync('packages').filter(f => {
     return false
   }
   return true
-}))
+})
+exports.targets = targets
 
 exports.fuzzyMatchTarget = (partialTargets, includeAllMatching) => {
   const matched = []

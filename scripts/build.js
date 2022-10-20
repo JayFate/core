@@ -41,34 +41,18 @@ async function run() {
     await fs.remove(path.resolve(__dirname, '../node_modules/.rts2_cache'))
   }
   if (!targets.length) {
-    await buildAll(allTargets)
+    await runParallel(allTargets, build)
     checkAllSizes(allTargets)
   } else {
-    await buildAll(fuzzyMatchTarget(targets, buildAllMatching))
-    checkAllSizes(fuzzyMatchTarget(targets, buildAllMatching))
+    const matchedTargets = fuzzyMatchTarget(targets, buildAllMatching)
+    await runParallel(matchedTargets, build)
+    checkAllSizes(matchedTargets)
   }
 }
 
-async function buildAll(targets) {
-  await runParallel(require('os').cpus().length, targets, build)
-}
-
-async function runParallel(maxConcurrency, source, iteratorFn) {
-  const ret = []
-  const executing = []
-  for (const item of source) {
-    const p = Promise.resolve().then(() => iteratorFn(item, source))
-    ret.push(p)
-
-    if (maxConcurrency <= source.length) {
-      const e = p.then(() => executing.splice(executing.indexOf(e), 1))
-      executing.push(e)
-      if (executing.length >= maxConcurrency) {
-        await Promise.race(executing)
-      }
-    }
-  }
-  return Promise.all(ret)
+async function runParallel(source, iteratorFn) {
+  const promises = source.map(target => iteratorFn(target))
+  return Promise.all(promises)
 }
 
 async function build(target) {
